@@ -1,0 +1,29 @@
+{
+  "name": "metroplex",
+  "version": "0.0.0",
+  "description": "Metroplex is capable of transforming into a battle station, giant robot or a distributed connect client directory for Primus.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/primus/metroplex"
+  },
+  "keywords": [
+    "primus",
+    "distributed",
+    "scale",
+    "real-time",
+    "metroplex"
+  ],
+  "author": "Arnout Kazemier",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/primus/metroplex/issues"
+  },
+  "homepage": "https://github.com/primus/metroplex",
+  "devDependencies": {
+    "redis": "^0.10.3"
+  }
+}
