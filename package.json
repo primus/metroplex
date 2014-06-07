@@ -25,5 +25,8 @@
   "homepage": "https://github.com/primus/metroplex",
   "devDependencies": {
     "redis": "^0.10.3"
+  },
+  "dependencies": {
+    "leverage": "0.0.x"
   }
 }

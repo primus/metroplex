@@ -1,15 +1,20 @@
 'use strict';
 
+var Leverage = require('leverage');
+
+//
+// Expose the Metroplex plugin.
+//
 var metroplex = module.exports;
 
 /**
  * Add defaults to the supplied options. The following options are available:
  *
- * - redis: The redis instance we should use to store data
+ * - redis: The Redis instance we should use to store data
  * - namespace: The namespace prefix to prevent collision's.
- * - interval: Expire interval to keep the server alive in redis
+ * - interval: Expire interval to keep the server alive in Redis
  * - timeout: Timeout for sparks who are alive.
- * - latency: Time it takes for our redis commands to execute.
+ * - latency: Time it takes for our Redis commands to execute.
  *
  * @param {Primus} primus The Primus instance that received the plugin.
  * @param {Object} options Configuration.
@@ -27,6 +32,10 @@ metroplex.options = function optional(primus, options) {
   options.timeout = options.timeout || 30 * 60;
   options.latency = options.latency || 2000;
 
+  options.leverage = new Leverage(options.redis, {
+    namespace: options.namespace
+  });
+
   return options;
 };
 
@@ -41,49 +50,53 @@ metroplex.server = function server(primus, options)  {
   options = metroplex.options(primus, options);
 
   var namespace = options.namespace +':'
+    , leverage = options.leverage
     , address = options.address
     , redis = options.redis;
 
   primus.on('connection', function connection(spark) {
-    redis.setex(namespace +':spark:'+ spark.id, options.timeout, address);
-
-    //
-    // We're using an expire value on the spark's id in Redis as we want the
-    // sparks to be cleaned up if this server goes down unexpectedly and we
-    // don't have any time to clean up our sparks. But it can be that our
-    // connection is alive longer than our supplied timeout so we need to update
-    // the expire value before the data is nuked from Redis. We could use expire
-    // for this but I'll rather make sure that this data is always set when do
-    // an interval as when we're to-late with updating the value (as the timeout
-    // and latency is configurable) we will be considered dead while we're still
-    // alive on the server.
-    //
-    spark.metroplex = setInterval(function metroplex() {
-      redis.setex(namespace +':spark:'+ spark.id, options.timeout, address);
-    }, options.timeout - options.latency);
+    redis.multi()
+      .hadd(namespace +':sparks', spark.id, address)
+      .sadd(namespace +':'+ address, spark.id)
+    .exec();
   }).on('disconnection', function disconnection(spark) {
-    clearInterval(spark.metroplex);
-    delete spark.metroplex;
-
-    redis.del(namespace +':spark:'+ spark.id, options.timeout, address);
+    redis.multi()
+      .hdel(namespace +':sparks', spark.id)
+      .srem(namespace +':'+ address, spark.id)
+    .exec();
   });
 
   primus.on('close', function close() {
-    redis.del(namespace +':'+ address);
-    clearInterval(alive);
+    redis.srem(namespace +':servers', address);
   }).server.on('listening', function listening() {
-    var address = 'http://localhost:'+ primus.server.address().port;
+    var local = 'http://localhost:'+ primus.server.address().port
+      , stored = !!options.address;
 
     //
     // We can only get the server's port number when the server starts
     // listening. So if our address is still undefined, it's only now that we
     // can provide a default value.
     //
-    options.address = options.address || address;
+    address = options.address = options.address || local;
+
+    //
+    // Only store the address if we haven't stored it already.
+    //
+    if (!stored) {
+      leverage.annihilate(address);
+      redis.multi()
+        .setex(namespace +':'+ address, options.interval, Date.now())
+        .sadd(namespace +':servers', address)
+      .exec();
+    }
   });
 
-  if (primus.server.address()) {
-    redis.setex(namespace +':'+ address, options.interval, Date.now());
+  if (address) {
+    leverage.annihilate(address);
+    redis.multi()
+      .setex(namespace +':'+ address, options.interval, Date.now())
+      .sadd(namespace +':servers', address)
+    .exec();
   }
 
   //
@@ -96,4 +109,38 @@ metroplex.server = function server(primus, options)  {
   var alive = setInterval(function interval() {
     redis.setex(namespace +':'+ address, options.interval, Date.now());
   }, options.interval - options.latency);
+
+  if ('function' === alive.unref) alive.unref();
+};
+
+/**
+ * Scan the Redis database for dead servers and reap the dead servers.
+ *
+ * @api private
+ */
+metroplex.scan = function scan(options) {
+  var namespace = options.namespace
+    , leverage = options.leverage
+    , redis = options.redis;
+
+  /**
+   * Check if the given server is expired. If it's expired we need to nuke all
+   * the references from the redis database and assume that everything is FUBAR.
+   *
+   * @param {String} address The server address
+   * @api private
+   */
+  function expired(address) {
+    redis.get(namespace +':'+ address, function get(err, stamp) {
+      if (err || Date.now() - +stamp < options.interval) return;
+
+      leverage.annihilate(address);
+    });
+  }
+
+  redis.smembers(namespace +':servers', function has(err, members) {
+    members.filter(function filter(address) {
+      return address !== options.address;
+    }).forEach(expired);
+  });
 };
