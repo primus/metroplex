@@ -31,7 +31,7 @@ metroplex.options = function optional(primus, options) {
 };
 
 /**
- * Keep the precense or "state" of each connection in Redis.
+ * Keep the presence or "state" of each connection in Redis.
  *
  * @param {Primus} primus The Primus instance that received the plugin.
  * @param {Object} options The options that were supplied to Primus.
@@ -46,7 +46,25 @@ metroplex.server = function server(primus, options)  {
 
   primus.on('connection', function connection(spark) {
     redis.setex(namespace +':spark:'+ spark.id, options.timeout, address);
+
+    //
+    // We're using an expire value on the spark's id in Redis as we want the
+    // sparks to be cleaned up if this server goes down unexpectedly and we
+    // don't have any time to clean up our sparks. But it can be that our
+    // connection is alive longer than our supplied timeout so we need to update
+    // the expire value before the data is nuked from Redis. We could use expire
+    // for this but I'll rather make sure that this data is always set when do
+    // an interval as when we're to-late with updating the value (as the timeout
+    // and latency is configurable) we will be considered dead while we're still
+    // alive on the server.
+    //
+    spark.metroplex = setInterval(function metroplex() {
+      redis.setex(namespace +':spark:'+ spark.id, options.timeout, address);
+    }, options.timeout - options.latency);
   }).on('disconnection', function disconnection(spark) {
+    clearInterval(spark.metroplex);
+    delete spark.metroplex;
+
     redis.del(namespace +':spark:'+ spark.id, options.timeout, address);
   });
 
@@ -65,16 +83,17 @@ metroplex.server = function server(primus, options)  {
   });
 
   if (primus.server.address()) {
-    redis.setex(namespace +':'+ address, options.interval);
+    redis.setex(namespace +':'+ address, options.interval, Date.now());
   }
 
   //
   // We need to make sure that this server is alive, the most easy and dirty way
   // of doing this is setting an interval which bumps the expire of our
   // dedicated server key. If we go off line, the key will expire and we will be
-  // K.O.
+  // K.O. The value indicates the last "ping" that we got from the node server
+  // so you can see when the last update was.
   //
   var alive = setInterval(function interval() {
-    redis.expire(namespace +':'+ address, options.interval);
+    redis.setex(namespace +':'+ address, options.interval, Date.now());
   }, options.interval - options.latency);
 };
