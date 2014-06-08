@@ -32,6 +32,10 @@ metroplex.options = function optional(primus, options) {
   options.timeout = options.timeout || 30 * 60;
   options.latency = options.latency || 2000;
 
+  if (address) {
+    options.address = options.address || 'http://localhost:'+ address.port;
+  }
+
   options.leverage = new Leverage(options.redis, {
     namespace: options.namespace
   });
@@ -47,7 +51,7 @@ metroplex.options = function optional(primus, options) {
  * @api public
  */
 metroplex.server = function server(primus, options)  {
-  options = metroplex.options(primus, options);
+  primus.options = options = metroplex.options(primus, options);
 
   var namespace = options.namespace +':'
     , leverage = options.leverage
@@ -67,7 +71,9 @@ metroplex.server = function server(primus, options)  {
   });
 
   primus.on('close', function close() {
-    redis.srem(namespace +':servers', address);
+    if (address) redis.srem(namespace +':servers', address, function (err) {
+      primus.emit('unregister', address);
+    });
   }).server.on('listening', function listening() {
     var local = 'http://localhost:'+ primus.server.address().port
       , stored = !!options.address;
@@ -82,22 +88,24 @@ metroplex.server = function server(primus, options)  {
     //
     // Only store the address if we haven't stored it already.
     //
-    if (!stored) {
-      leverage.annihilate(address);
-      redis.multi()
-        .setex(namespace +':'+ address, options.interval, Date.now())
-        .sadd(namespace +':servers', address)
-      .exec();
-    }
+    if (!stored) metroplex.register(primus, options);
   });
 
-  if (address) {
-    leverage.annihilate(address);
-    redis.multi()
-      .setex(namespace +':'+ address, options.interval, Date.now())
-      .sadd(namespace +':servers', address)
-    .exec();
-  }
+  /**
+   * Get all current registered servers except our selfs.
+   *
+   * @param {Function} fn Callback
+   * @api private
+   */
+  primus.servers = function servers(fn) {
+    redis.smembers(namespace +':servers', function (err, members) {
+      fn(err, (members || []).filter(function filter(address) {
+        return address !== options.address;
+      }));
+    });
+  };
+
+  if (address) metroplex.register(primus, options);
 
   //
   // We need to make sure that this server is alive, the most easy and dirty way
@@ -116,31 +124,48 @@ metroplex.server = function server(primus, options)  {
 /**
  * Scan the Redis database for dead servers and reap the dead servers.
  *
+ * @param {Primus} primus Our current Primus instance.
+ * @param {Object} options The options.
  * @api private
  */
-metroplex.scan = function scan(options) {
+metroplex.scan = function scan(primus, options) {
   var namespace = options.namespace
     , leverage = options.leverage
     , redis = options.redis;
 
-  /**
-   * Check if the given server is expired. If it's expired we need to nuke all
-   * the references from the redis database and assume that everything is FUBAR.
-   *
-   * @param {String} address The server address
-   * @api private
-   */
-  function expired(address) {
-    redis.get(namespace +':'+ address, function get(err, stamp) {
-      if (err || Date.now() - +stamp < options.interval) return;
+  primus.servers(function find(err, servers) {
+    servers.forEach(function expired(address) {
+      redis.get(namespace +':'+ address, function get(err, stamp) {
+        if (err || Date.now() - +stamp < options.interval) return;
 
-      leverage.annihilate(address);
+        leverage.annihilate(address);
+      });
     });
-  }
+  });
+};
 
-  redis.smembers(namespace +':servers', function has(err, members) {
-    members.filter(function filter(address) {
-      return address !== options.address;
-    }).forEach(expired);
+/**
+ * Register a new Primus server in the Redis database.
+ *
+ * @param {Primus} primus Our current Primus instance.
+ * @param {Object} options The options.
+ * @api private
+ */
+metroplex.register = function register(primus, options) {
+  var namespace = options.namespace
+    , leverage = options.leverage
+    , redis = options.redis;
+
+  leverage.annihilate(options.address, function (err) {
+    if (err) console.error('metroplex:register:error', err.stack);
+
+    redis.multi()
+      .setex(namespace +':'+ options.address, options.interval, Date.now())
+      .sadd(namespace +':servers', options.address)
+    .exec(function register(err) {
+      if (err) console.error('metroplex:register:error', err.stack);
+
+      primus.emit('register', options.address);
+    });
   });
 };

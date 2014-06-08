@@ -4,7 +4,7 @@
   "description": "Metroplex is capable of transforming into a battle station, giant robot or a distributed connect client directory for Primus.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha $(find test -name '*.test.js')"
   },
   "repository": {
     "type": "git",
@@ -24,9 +24,14 @@
   },
   "homepage": "https://github.com/primus/metroplex",
   "devDependencies": {
-    "redis": "^0.10.3"
+    "assume": "0.0.x",
+    "mocha": "1.20.x",
+    "pre-commit": "0.0.x",
+    "primus": "2.3.x",
+    "ws": "0.4.x"
   },
   "dependencies": {
-    "leverage": "0.0.x"
+    "leverage": "0.0.x",
+    "redis": "0.10.x"
   }
 }
