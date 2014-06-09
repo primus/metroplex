@@ -142,9 +142,12 @@ metroplex.scan = function scan(primus, options) {
     , redis = options.redis;
 
   primus.servers(function find(err, servers) {
+    if (err) console.error('metroplex:scan:error', err.stack);
+    
     servers.forEach(function expired(address) {
       redis.get(namespace +':'+ address, function get(err, stamp) {
-        if (err || Date.now() - +stamp < options.interval) return;
+        if (err) return console.error('metroplex:scan:error', err.stack);
+        if (Date.now() - +stamp < options.interval) return;
 
         leverage.annihilate(address);
       });
