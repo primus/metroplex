@@ -57,7 +57,8 @@ describe('metroplex', function () {
       redis.smembers('metroplex:servers', function (err, servers) {
         if (err) return next(err);
 
-        assume(servers).to.contain(address);
+        assume(servers).to.be.a('array');
+        assume(!!~servers.indexOf(address)).to.be.true();
         next();
       });
     });
@@ -86,6 +87,59 @@ describe('metroplex', function () {
       assume(address).to.contain(http.port);
 
       server.destroy();
+    });
+  });
+
+  it('stores and removes the spark in the sparks hash', function (next) {
+    server.use('metroplex', metroplex);
+
+    var client = server.Socket('http://localhost:'+ http.port);
+
+    client.id(function (id) {
+      redis.hget('metroplex:sparks', id, function canihas(err, address) {
+        if (err) return next(err);
+
+        assume(address).to.equal('http://localhost:'+ http.port);
+        client.end();
+      });
+    });
+
+    server.once('disconnection', function (spark) {
+      redis.hget('metroplex:sparks', spark.id, function rmshit(err, address) {
+        if (err) return next(err);
+
+        assume(!address).to.be.true();
+        next();
+      });
+    });
+  });
+
+  it('also stores the spark under the server address', function (next) {
+    server.use('metroplex', metroplex);
+
+    var address = 'http://localhost:'+ http.port
+      , client = server.Socket(address);
+
+    client.id(function (id) {
+      redis.smembers('metroplex:'+ address +':sparks', function (err, sparks) {
+        if (err) return next(err);
+
+        assume(sparks).is.a('array');
+        assume(id).to.equal(sparks[0]);
+
+        client.end();
+      });
+    });
+
+    server.once('disconnection', function (spark) {
+      redis.smembers('metroplex:'+ address +':sparks', function (err, sparks) {
+        if (err) return next(err);
+
+        assume(sparks).is.a('array');
+        assume(!~sparks.indexOf(spark.id)).to.be.true();
+
+        next();
+      });
     });
   });
 });

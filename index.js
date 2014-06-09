@@ -27,7 +27,7 @@ metroplex.options = function optional(primus, options) {
   options = options || {};
 
   options.redis = options.redis || require('redis').createClient();
-  options.namespace = options.namespace || 'metroplex';
+  options.namespace = (options.namespace || 'metroplex') +':';
   options.interval = options.interval || 5 * 60 * 1000;
   options.timeout = options.timeout || 30 * 60;
   options.latency = options.latency || 2000;
@@ -53,24 +53,24 @@ metroplex.options = function optional(primus, options) {
 metroplex.server = function server(primus, options)  {
   primus.options = options = metroplex.options(primus, options);
 
-  var namespace = options.namespace +':'
+  var namespace = options.namespace
     , address = options.address
     , redis = options.redis;
 
   primus.on('connection', function connection(spark) {
     redis.multi()
-      .hadd(namespace +':sparks', spark.id, address)
-      .sadd(namespace +':'+ address, spark.id)
+      .hset(namespace +'sparks', spark.id, address)
+      .sadd(namespace + address +':sparks', spark.id)
     .exec();
   }).on('disconnection', function disconnection(spark) {
     redis.multi()
-      .hdel(namespace +':sparks', spark.id)
-      .srem(namespace +':'+ address, spark.id)
+      .hdel(namespace +'sparks', spark.id)
+      .srem(namespace + address +':sparks', spark.id)
     .exec();
   });
 
   primus.on('close', function close() {
-    if (address) redis.srem(namespace +':servers', address, function (err) {
+    if (address) redis.srem(namespace +'servers', address, function (err) {
       if (err) return console.error('metroplex:unregister:error', err.stack);
 
       primus.emit('unregister', address);
@@ -106,7 +106,7 @@ metroplex.server = function server(primus, options)  {
    * @api private
    */
   primus.servers = function servers(fn) {
-    redis.smembers(namespace +':servers', function (err, members) {
+    redis.smembers(namespace +'servers', function (err, members) {
       fn(err, (members || []).filter(function filter(address) {
         return address !== options.address;
       }));
@@ -123,7 +123,8 @@ metroplex.server = function server(primus, options)  {
   // so you can see when the last update was.
   //
   var alive = setInterval(function interval() {
-    redis.setex(namespace +':'+ address, options.interval, Date.now());
+    redis.setex(namespace + address +':alive', options.interval, Date.now());
+    metroplex.scan(primus, options);
   }, options.interval - options.latency);
 
   if ('function' === alive.unref) alive.unref();
@@ -143,11 +144,10 @@ metroplex.scan = function scan(primus, options) {
 
   primus.servers(function find(err, servers) {
     if (err) console.error('metroplex:scan:error', err.stack);
-    
+
     servers.forEach(function expired(address) {
-      redis.get(namespace +':'+ address, function get(err, stamp) {
-        if (err) return console.error('metroplex:scan:error', err.stack);
-        if (Date.now() - +stamp < options.interval) return;
+      redis.get(namespace + address, function get(err, stamp) {
+        if (err || Date.now() - +stamp < options.interval) return;
 
         leverage.annihilate(address);
       });
@@ -171,8 +171,8 @@ metroplex.register = function register(primus, options) {
     if (err) return console.error('metroplex:register:error', err.stack);
 
     redis.multi()
-      .setex(namespace +':'+ options.address, options.interval, Date.now())
-      .sadd(namespace +':servers', options.address)
+      .setex(namespace + options.address, options.interval, Date.now())
+      .sadd(namespace +'servers', options.address)
     .exec(function register(err) {
       if (err) return console.error('metroplex:register:error', err.stack);
 
