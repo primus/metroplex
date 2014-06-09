@@ -54,7 +54,6 @@ metroplex.server = function server(primus, options)  {
   primus.options = options = metroplex.options(primus, options);
 
   var namespace = options.namespace +':'
-    , leverage = options.leverage
     , address = options.address
     , redis = options.redis;
 
@@ -72,6 +71,8 @@ metroplex.server = function server(primus, options)  {
 
   primus.on('close', function close() {
     if (address) redis.srem(namespace +':servers', address, function (err) {
+      if (err) return console.error('metroplex:unregister:error', err.stack);
+
       primus.emit('unregister', address);
     });
   }).server.on('listening', function listening() {
@@ -89,6 +90,13 @@ metroplex.server = function server(primus, options)  {
     // Only store the address if we haven't stored it already.
     //
     if (!stored) metroplex.register(primus, options);
+  });
+
+  //
+  // Extend the list of reserved events with `metroplex` events.
+  //
+  ['register', 'unregister'].forEach(function reserved(event) {
+    primus.reserved.events[event] = 1;
   });
 
   /**
@@ -157,13 +165,13 @@ metroplex.register = function register(primus, options) {
     , redis = options.redis;
 
   leverage.annihilate(options.address, function (err) {
-    if (err) console.error('metroplex:register:error', err.stack);
+    if (err) return console.error('metroplex:register:error', err.stack);
 
     redis.multi()
       .setex(namespace +':'+ options.address, options.interval, Date.now())
       .sadd(namespace +':servers', options.address)
     .exec(function register(err) {
-      if (err) console.error('metroplex:register:error', err.stack);
+      if (err) return console.error('metroplex:register:error', err.stack);
 
       primus.emit('register', options.address);
     });
