@@ -23,6 +23,7 @@ Metroplex.server = function server(primus, options)  {
     metroplex.unregister();
   }).server.on('listening', function listening() {
     if (metroplex.address) return;
+
     metroplex.register(primus.server);
   });
 
@@ -40,4 +41,10 @@ Metroplex.server = function server(primus, options)  {
   // Expose the Metroplex instance so we can interact with it.
   //
   primus.metroplex = metroplex;
+
+  //
+  // If we have omega-supreme loaded, we're going to introduce additional
+  // functionality. Full blown, awesome, distributed broadcasting.
+  //
+  require('./omega')(primus);
 };
