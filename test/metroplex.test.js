@@ -46,7 +46,7 @@ describe('metroplex', function () {
   it('emits a register event', function (next) {
     server.use('metroplex', metroplex);
     server.once('register', function (address) {
-      assume(address).to.equal('http://localhost:'+ http.port);
+      assume(address).to.contain(http.port);
       next();
     });
   });
@@ -99,7 +99,7 @@ describe('metroplex', function () {
       redis.hget('metroplex:sparks', id, function canihas(err, address) {
         if (err) return next(err);
 
-        assume(address).to.equal('http://localhost:'+ http.port);
+        assume(address).to.contain(http.port);
         client.end();
       });
     });
@@ -117,11 +117,10 @@ describe('metroplex', function () {
   it('also stores the spark under the server address', function (next) {
     server.use('metroplex', metroplex);
 
-    var address = 'http://localhost:'+ http.port
-      , client = server.Socket(address);
+    var client = server.Socket(server.metroplex.address);
 
     client.id(function (id) {
-      redis.smembers('metroplex:'+ address +':sparks', function (err, sparks) {
+      redis.smembers('metroplex:'+ server.metroplex.address +':sparks', function (err, sparks) {
         if (err) return next(err);
 
         assume(sparks).is.a('array');
@@ -132,7 +131,7 @@ describe('metroplex', function () {
     });
 
     server.once('disconnection', function (spark) {
-      redis.smembers('metroplex:'+ address +':sparks', function (err, sparks) {
+      redis.smembers('metroplex:'+ server.metroplex.address +':sparks', function (err, sparks) {
         if (err) return next(err);
 
         assume(sparks).is.a('array');
@@ -141,5 +140,21 @@ describe('metroplex', function () {
         next();
       });
     });
+  });
+
+  it('generates address only once the server is started', function (next) {
+    var http = require('http').createServer()
+      , primus = new Primus(http, { redis: redis })
+      , portnumber = port++;
+
+    primus.use('metroplex', metroplex);
+    assume(primus.metroplex.address).to.be.falsey();
+
+    http.once('listening', function () {
+      assume(primus.metroplex.address).to.contain(portnumber);
+      next();
+    });
+
+    http.listen(portnumber);
   });
 });
