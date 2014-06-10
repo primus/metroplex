@@ -31,7 +31,7 @@ Metroplex.server = function server(primus, options)  {
   // that they shouldn't be bluntly emitting this and proxy these events to the
   // Primus instance you can listen on the Primus server instead of the plugin.
   //
-  ['register', 'unregister'].forEach(function each(event) {
+  ['register', 'unregister', 'error'].forEach(function each(event) {
     primus.reserved.events[event] = 1;
     metroplex.on(event, primus.emits(event));
   });
