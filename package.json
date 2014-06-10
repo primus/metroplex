@@ -31,8 +31,8 @@
     "ws": "0.4.x"
   },
   "dependencies": {
-    "eventemitter3": "^0.1.2",
-    "fusing": "^0.3.0",
+    "eventemitter3": "0.1.x",
+    "fusing": "0.3.x",
     "leverage": "0.0.x",
     "redis": "0.10.x"
   }
