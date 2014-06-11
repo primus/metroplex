@@ -68,26 +68,38 @@ Metroplex.readable('parse', function parse(server) {
  * Register a new server/address in the Metroplex registry.
  *
  * @param {String|Server} address The server to add.
+ * @param {Function} fn Optional callback;
  * @returns {Metroplex}
  * @api public
  */
-Metroplex.readable('register', function register(address) {
+Metroplex.readable('register', function register(address, fn) {
   var metroplex = this;
 
   metroplex.address = this.parse(address || metroplex.address);
-  if (!metroplex.address) return this;
+  if (!metroplex.address) {
+    if (fn) fn();
+    return this;
+  }
 
   metroplex.leverage.annihilate(metroplex.address, function annihilate(err) {
-    if (err) return metroplex.emit('error', err);
+    if (err) {
+      if (fn) return fn(err);
+      return metroplex.emit('error', err);
+    }
 
     metroplex.redis.multi()
       .setex(metroplex.namespace + metroplex.address, metroplex.interval, Date.now())
       .sadd(metroplex.namespace +'servers', metroplex.address)
     .exec(function register(err) {
-      if (err) return metroplex.emit('error', err);
+      if (err) {
+        if (fn) return fn(err);
+        return metroplex.emit('error', err);
+      }
 
       metroplex.emit('register', metroplex.address);
       metroplex.setInterval();
+
+      if (fn) fn(err, metroplex.address);
     });
   });
 });
@@ -96,20 +108,29 @@ Metroplex.readable('register', function register(address) {
  * Remove a server/address from the Metroplex registry.
  *
  * @param {String|Server} address The server to remove.
+ * @param {Function} fn Optional callback.
  * @returns {Metroplex}
  * @api public
  */
-Metroplex.readable('unregister', function unregister(address) {
+Metroplex.readable('unregister', function unregister(address, fn) {
   var metroplex = this;
 
   address = this.parse(address || metroplex.address);
-  if (!metroplex.address) return this;
+  if (!metroplex.address) {
+    if (fn) fn();
+    return this;
+  }
 
   metroplex.leverage.annihilate(address, function annihilate(err) {
-    if (err) return metroplex.emit('error', err);
+    if (err) {
+      if (fn) return fn(err);
+      return metroplex.emit('error', err);
+    }
 
     metroplex.emit('unregister', address);
+
     if (metroplex.timer) clearInterval(metroplex.timer);
+    if (fn) fn(err, address);
   });
 
   return this;

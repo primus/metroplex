@@ -19,8 +19,8 @@ Metroplex.server = function server(primus, options)  {
     metroplex.connect(spark);
   }).on('disconnection', function disconnection(spark) {
     metroplex.disconnect(spark);
-  }).on('close', function close() {
-    metroplex.unregister();
+  }).on('close', function close(options, next) {
+    metroplex.unregister(undefined, next);
   }).server.on('listening', function listening() {
     if (metroplex.address) return;
 
