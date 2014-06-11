@@ -11,7 +11,7 @@ var async = require('async');
 module.exports = function forwards(primus) {
   if (!primus.forward) return;
 
-  var metroplex = forward.metroplex
+  var metroplex = primus.metroplex
     , forward = primus.forward;
 
   /**
