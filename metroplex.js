@@ -21,8 +21,10 @@ var Leverage = require('leverage')
 function Metroplex(primus, options) {
   if (!(this instanceof Metroplex)) return new Metroplex(primus, options);
 
-  var parsed = this.parse(primus.server);
   options = options || {};
+  primus = primus || {};
+
+  var parsed = this.parse(primus.server);
 
   this.fuse();
 

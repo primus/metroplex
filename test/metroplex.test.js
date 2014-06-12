@@ -1,160 +1,55 @@
 describe('metroplex', function () {
   'use strict';
-  var redis = require('redis').createClient()
+
+  var Metroplex = require('../metroplex')
     , assume = require('assume')
-    , Primus = require('primus')
-    , metroplex = require('../');
+    , port = 1024;
 
-  var port = 1024
-    , server2
-    , server
-    , http2
-    , http;
-
-  beforeEach(function each(next) {
-    http = require('http').createServer();
-    http2 = require('http').createServer();
-
-    server = new Primus(http, {
-      transformer: 'websockets',
-      redis: redis
-    });
-
-    server2 = new Primus(http2, {
-      transformer: 'websockets'
-    });
-
-    http.port = port++;
-    http2.port = port++;
-
-    http.url = 'http://localhost:'+ http.port;
-    http2.url = 'http://localhost:'+ http2.port;
-
-    http.listen(http.port, function () {
-      http2.listen(http2.port, function () {
-        redis.flushall(next);
-      });
-    });
+  it('is exposed as an function', function () {
+    assume(Metroplex).is.a('function');
   });
 
-  afterEach(function each(next) {
-    server.destroy(function () {
-      server2.destroy(next);
-    });
+  it('constructs a new instance', function () {
+    var metroplex = new Metroplex();
+
+    assume(metroplex).to.be.instanceOf(Metroplex);
   });
 
-  it('emits a register event', function (next) {
-    server.use('metroplex', metroplex);
-    server.once('register', function (address) {
-      assume(address).to.contain(http.port);
-      next();
-    });
+  it('returns a new instance if constructed without the new keyword', function () {
+    assume(Metroplex()).to.be.instanceOf(Metroplex);
   });
 
-  it('has added server to redis after the register event', function (next) {
-    server.use('metroplex', metroplex);
-    server.once('register', function (address) {
-      redis.smembers('metroplex:servers', function (err, servers) {
-        if (err) return next(err);
+  describe('.parse', function () {
+    it('assumes a supplied string is the address', function () {
+      var metroplex = new Metroplex()
+        , address = 'localhost:3131';
 
-        assume(servers).to.be.a('array');
-        assume(!!~servers.indexOf(address)).to.be.true();
-        next();
-      });
+      assume(metroplex.parse(address)).to.equal(address);
     });
-  });
 
-  it('removes the added server when primus closes', function (next) {
-    server.use('metroplex', metroplex);
+    it('extracts the port number from a HTTP server', function (next) {
+      var http = require('http').createServer()
+        , metroplex = new Metroplex();
 
-    var addr;
-
-    server.once('unregister', function (address) {
-      assume(address).to.equal(addr);
-
-      redis.smembers('metroplex:servers', function (err, servers) {
-        if (err) return next(err);
-
-        assume(!!~servers).to.be.true();
-        next();
+      http.listen(++port, function () {
+        assume(metroplex.parse(http)).to.contain(port);
+        assume(metroplex.parse(http)).to.contain('http://');
+        http.close(next);
       });
     });
 
-    server.once('register', function (address) {
-      addr = address;
+    it('knows the different between a HTTP and HTTPS server', function (next) {
+      var https = require('https').createServer({
+            cert: require('fs').readFileSync(__dirname +'/ssl.cert'),
+            key: require('fs').readFileSync(__dirname +'/ssl.key')
+          })
+        , metroplex = new Metroplex();
 
-      assume(address).to.be.a('string');
-      assume(address).to.contain(http.port);
-
-      server.destroy();
-    });
-  });
-
-  it('stores and removes the spark in the sparks hash', function (next) {
-    server.use('metroplex', metroplex);
-
-    var client = server.Socket('http://localhost:'+ http.port);
-
-    client.id(function (id) {
-      redis.hget('metroplex:sparks', id, function canihas(err, address) {
-        if (err) return next(err);
-
-        assume(address).to.contain(http.port);
-        client.end();
+      https.listen(++port, function () {
+        assume(metroplex.parse(https)).to.contain(port);
+        assume(metroplex.parse(https)).to.contain('https://');
+        https.close(next);
       });
     });
-
-    server.once('disconnection', function (spark) {
-      redis.hget('metroplex:sparks', spark.id, function rmshit(err, address) {
-        if (err) return next(err);
-
-        assume(!address).to.be.true();
-        next();
-      });
-    });
-  });
-
-  it('also stores the spark under the server address', function (next) {
-    server.use('metroplex', metroplex);
-
-    var client = server.Socket(server.metroplex.address);
-
-    client.id(function (id) {
-      redis.smembers('metroplex:'+ server.metroplex.address +':sparks', function (err, sparks) {
-        if (err) return next(err);
-
-        assume(sparks).is.a('array');
-        assume(id).to.equal(sparks[0]);
-
-        client.end();
-      });
-    });
-
-    server.once('disconnection', function (spark) {
-      redis.smembers('metroplex:'+ server.metroplex.address +':sparks', function (err, sparks) {
-        if (err) return next(err);
-
-        assume(sparks).is.a('array');
-        assume(!~sparks.indexOf(spark.id)).to.be.true();
-
-        next();
-      });
-    });
-  });
-
-  it('generates address only once the server is started', function (next) {
-    var http = require('http').createServer()
-      , primus = new Primus(http, { redis: redis })
-      , portnumber = port++;
-
-    primus.use('metroplex', metroplex);
-    assume(primus.metroplex.address).to.be.falsey();
-
-    http.once('listening', function () {
-      assume(primus.metroplex.address).to.contain(portnumber);
-      next();
-    });
-
-    http.listen(portnumber);
   });
 });
