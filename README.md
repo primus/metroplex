@@ -53,7 +53,7 @@ this plugin:
 These options should be provided in the options object of the Primus server:
 
 ```js
-primus = new Primus(http, { 
+primus = new Primus(http, {
   transformer: 'sockjs',
   namespace: 'metroplex',
   redis: require('redis').createClient()
@@ -82,7 +82,7 @@ The following **public** methods are available.
 metroplex.servers(fn)
 ```
 
-List all the servers in our current registry. 
+List all the servers in our current registry.
 
 ```js
 metroplex.servers(function (err, servers) {
