@@ -55,7 +55,7 @@ Metroplex.readable('parse', function parse(server) {
   if ('string' === typeof server || !server) return server || '';
 
   var secure = server instanceof https.Server || 'function' === typeof server.addContext
-    , address = server.address();
+    , address = server.address ? server.address() : undefined;
 
   //
   // If the HTTP server isn't listening yet to a port number the result of
