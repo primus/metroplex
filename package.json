@@ -1,6 +1,6 @@
 {
   "name": "metroplex",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Metroplex is capable of transforming into a battle station, giant robot or a distributed connect client directory for Primus.",
   "main": "index.js",
   "scripts": {
