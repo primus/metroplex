@@ -248,7 +248,9 @@ Metroplex.readable('setInterval', function setIntervals() {
         redis.get(metroplex.namespace + address, function get(err, stamp) {
           if (err || Date.now() - +stamp < metroplex.interval) return;
 
-          metroplex.leverage.annihilate(address);
+          metroplex.leverage.annihilate(address, function murdered(err) {
+            if (err) return metroplex.emit('error', err);
+          });
         });
       });
     });
