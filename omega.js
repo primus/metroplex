@@ -3,6 +3,14 @@
 var async = require('async');
 
 /**
+ * A nope function allows for an optional callback pattern.
+ *
+ * @type {Function}
+ * @private
+ */
+function nope() { }
+
+/**
  * Omega supreme integration.
  *
  * @param {Primus} primus Primus instance
@@ -23,10 +31,12 @@ module.exports = function forwards(primus) {
    * @api public
    */
   forward.broadcast = function broadcast(msg, fn) {
+    fn = fn || nope;
+
     metroplex.servers(function servers(err, list) {
       if (err) return fn(err);
 
-      async.each(list, function each(server, next) {
+      async.map(list, function each(server, next) {
         forward(server, msg, next);
       }, fn);
     });
@@ -44,6 +54,8 @@ module.exports = function forwards(primus) {
    * @api public
    */
   forward.sparks = function sparks(ids, msg, fn) {
+    fn = fn || nope;
+
     metroplex.sparks(ids, function sparks(err, servers) {
       if (err) return fn(err);
 
@@ -74,6 +86,8 @@ module.exports = function forwards(primus) {
    * @api public
    */
   forward.spark = function spark(id, msg, fn) {
+    fn = fn || nope;
+
     metroplex.spark(id, function spark(err, server) {
       if (err) return fn(err);
 
