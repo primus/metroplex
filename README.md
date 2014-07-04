@@ -96,8 +96,8 @@ metroplex.servers(function (err, servers) {
 metroplex.spark(id, fn)
 ```
 
-Get the server for the given spark id. It does not check if the spark on the
-current Primus instance. That's up to the developer to implement.
+Get the server for the given spark id. It does not check if the spark is hosted
+on the current server. That's up to the developer to implement.
 
 ```js
 metroplex.spark(id, function (err, server) {
@@ -111,9 +111,9 @@ metroplex.spark(id, function (err, server) {
 metroplex.sparks(sparks, fn)
 ```
 
-Get the servers for each of the ids in the given array. It will return an object
-and just like the `metroplex.spark` it does not check if spark is hosted on the
-current server.
+Get the servers for each id in the given `sparks` array. It will return an
+object and just like `metroplex.spark` it does not check if the spark is hosted
+on the current server.
 
 ## License
 
