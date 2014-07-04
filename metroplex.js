@@ -2,7 +2,8 @@
 
 var Leverage = require('leverage')
   , https = require('https')
-  , fuse = require('fusing');
+  , fuse = require('fusing')
+  , ip = require('ip');
 
 /**
  * Add defaults to the supplied options. The following options are available:
@@ -62,6 +63,13 @@ Metroplex.readable('parse', function parse(server) {
   // .address will be undefined. We can only get the location
   //
   if (!address) return '';
+
+  //
+  // Seriously, 0.0.0.0 is basically localhost. Get the correct address for it.
+  //
+  if (address.address === '0.0.0.0') {
+    address.address = ip.address();
+  }
 
   return 'http'+ (secure ? 's' : '') +'://'+ address.address +':'+ address.port;
 });
