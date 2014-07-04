@@ -185,10 +185,17 @@ Metroplex.readable('disconnect', function disconnect(spark) {
  * @returns {Metroplex}
  * @api public
  */
-Metroplex.readable('servers', function servers(fn) {
+Metroplex.readable('servers', function servers(self, fn) {
   var metroplex = this;
 
+  if ('boolean' !== typeof self) {
+    fn = self;
+    self = 0;
+  }
+
   this.redis.smembers(this.namespace +'servers', function smembers(err, members) {
+    if (self) return fn(err, members);
+
     fn(err, (members || []).filter(function filter(address) {
       return address !== metroplex.address;
     }));
