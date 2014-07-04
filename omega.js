@@ -35,10 +35,7 @@ module.exports = function forwards(primus) {
 
     metroplex.servers(function servers(err, list) {
       if (err) return fn(err);
-
-      async.map(list, function each(server, next) {
-        forward(server, msg, next);
-      }, fn);
+      forward(list, msg, fn);
     });
 
     return forward;
@@ -70,7 +67,14 @@ module.exports = function forwards(primus) {
 
       async.each(Object.keys(servers), function each(server, next) {
         forward(server, msg, servers[server], next);
-      }, fn);
+      }, function calculate(err, reached) {
+        if (err) return fn(err, reached);
+
+        fn(err, reached.reduce(function reduce(memo, reach) {
+          memo.send += reach.send || 0;
+          return memo;
+        }, { ok: true, send: 0 }));
+      });
     });
 
     return forward;
