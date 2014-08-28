@@ -5,6 +5,13 @@ var Leverage = require('leverage')
   , fuse = require('fusing')
   , ip = require('ip');
 
+//
+// Ensure that the directory for our custom lua scripts is set correctly.
+//
+Leverage.scripts = Leverage.scripts.concat(
+  Leverage.introduce(require('path').join(__dirname, 'lua'), Leverage.prototype)
+);
+
 /**
  * Add defaults to the supplied options. The following options are available:
  *
