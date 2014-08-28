@@ -9,7 +9,7 @@ var Leverage = require('leverage')
 // Ensure that the directory for our custom lua scripts is set correctly.
 //
 Leverage.scripts = Leverage.scripts.concat(
-  Leverage.introduce(require('path').join(__dirname, 'lua'), Leverage.prototype)
+  Leverage.introduce(require('path').join(__dirname, 'redis'), Leverage.prototype)
 );
 
 /**
