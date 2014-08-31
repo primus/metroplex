@@ -1,4 +1,7 @@
-# Metroplex [![Build Status](https://travis-ci.org/primus/metroplex.svg?branch=master)](https://travis-ci.org/primus/metroplex)
+# Metroplex
+
+[![Build Status](https://travis-ci.org/primus/metroplex.svg?branch=master)](https://travis-ci.org/primus/metroplex)
+[![NPM version](https://badge.fury.io/js/metroplex.svg)](http://badge.fury.io/js/metroplex)
 
 Metroplex a Redis based spark/connection registry for Primus.
 
