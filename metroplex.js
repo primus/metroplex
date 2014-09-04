@@ -166,7 +166,9 @@ Metroplex.readable('servers', function servers(fn) {
   var metroplex = this;
 
   metroplex.redis.keys(metroplex.namespace + 'server:*', function keyList(err, list) {
-    fn(err, (list || []).filter(function filter(address) {
+    fn(err, (list || []).map(function(key) {
+      return key.replace(metroplex.namespace + 'server:', '');
+    }).filter(function filter(address) {
       return address !== metroplex.address;
     }));
   });
@@ -210,7 +212,7 @@ Metroplex.readable('spark', function spark(id, fn) {
 Metroplex.readable('sparks', function sparks(ids, fn) {
   var metroplex = this;
   metroplex.leverage.multiget('spark:', ids, function(err, result) {
-    fn(JSON.parse(result));
+    fn(err, JSON.parse(result));
   });
   return this;
 });
