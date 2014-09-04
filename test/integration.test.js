@@ -55,11 +55,11 @@ describe('plugin', function () {
   it('has added server to redis after the register event', function (next) {
     server.use('metroplex', metroplex);
     server.once('register', function (address) {
-      redis.smembers('metroplex:servers', function (err, servers) {
+      redis.keys('metroplex:server:*', function (err, servers) {
         if (err) return next(err);
 
         assume(servers).to.be.a('array');
-        assume(!!~servers.indexOf(address)).to.be.true();
+        assume(!!~servers.indexOf('metroplex:server:' + address)).to.be.true();
         next();
       });
     });
@@ -91,53 +91,23 @@ describe('plugin', function () {
     });
   });
 
-  it('stores and removes the spark in the sparks hash', function (next) {
+  it('stores and removes the spark', function (next) {
     server.use('metroplex', metroplex);
 
     var client = server.Socket('http://localhost:'+ http.port);
 
     client.id(function (id) {
-      redis.hget('metroplex:sparks', id, function canihas(err, address) {
+      redis.get('metroplex:spark:' + id, function(err, address) {
         if (err) return next(err);
-
         assume(address).to.contain(http.port);
         client.end();
       });
     });
 
     server.once('disconnection', function (spark) {
-      redis.hget('metroplex:sparks', spark.id, function rmshit(err, address) {
+      redis.get('metroplex:spark:' + spark.id, function(err, address) {
         if (err) return next(err);
-
         assume(!address).to.be.true();
-        next();
-      });
-    });
-  });
-
-  it('also stores the spark under the server address', function (next) {
-    server.use('metroplex', metroplex);
-
-    var client = server.Socket(server.metroplex.address);
-
-    client.id(function (id) {
-      redis.smembers('metroplex:'+ server.metroplex.address +':sparks', function (err, sparks) {
-        if (err) return next(err);
-
-        assume(sparks).is.a('array');
-        assume(id).to.equal(sparks[0]);
-
-        client.end();
-      });
-    });
-
-    server.once('disconnection', function (spark) {
-      redis.smembers('metroplex:'+ server.metroplex.address +':sparks', function (err, sparks) {
-        if (err) return next(err);
-
-        assume(sparks).is.a('array');
-        assume(!~sparks.indexOf(spark.id)).to.be.true();
-
         next();
       });
     });
