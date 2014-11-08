@@ -1,7 +1,6 @@
 # Metroplex
 
-[![Build Status](https://travis-ci.org/primus/metroplex.svg?branch=master)](https://travis-ci.org/primus/metroplex)
-[![NPM version](https://badge.fury.io/js/metroplex.svg)](http://badge.fury.io/js/metroplex)
+[![Version npm](http://img.shields.io/npm/v/metroplex.svg?style=flat-square)](http://browsenpm.org/package/metroplex)[![Build Status](http://img.shields.io/travis/primus/metroplex/master.svg?style=flat-square)](https://travis-ci.org/primus/metroplex)[![Dependencies](https://img.shields.io/david/primus/metroplex.svg?style=flat-square)](https://david-dm.org/primus/metroplex)[![Coverage Status](http://img.shields.io/coveralls/primus/metroplex/master.svg?style=flat-square)](https://coveralls.io/r/primus/metroplex?branch=master)[![IRC channel](http://img.shields.io/badge/IRC-irc.freenode.net%23primus-00a8ff.svg?style=flat-square)](http://webchat.freenode.net/?channels=primus)
 
 Metroplex a Redis based spark/connection registry for Primus.
 
