@@ -40,6 +40,6 @@
     "fusing": "0.4.x",
     "ip": "0.3.x",
     "leverage": "0.1.x",
-    "redis": "0.10.x"
+    "redis": "0.12.x"
   }
 }
