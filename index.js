@@ -17,6 +17,9 @@ Metroplex.server = function server(primus, options)  {
 
   primus.on('connection', function connection(spark) {
     metroplex.connect(spark);
+    spark.on('incoming::ping', function heartbeat() {
+      metroplex.heartbeat(spark);
+    });
   }).on('disconnection', function disconnection(spark) {
     metroplex.disconnect(spark);
   }).on('close', function close(options, next) {

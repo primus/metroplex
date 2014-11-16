@@ -55,11 +55,11 @@ describe('plugin', function () {
   it('has added server to redis after the register event', function (next) {
     server.use('metroplex', metroplex);
     server.once('register', function (address) {
-      redis.smembers('metroplex:servers', function (err, servers) {
+      redis.keys('metroplex:server:*', function (err, servers) {
         if (err) return next(err);
 
         assume(servers).to.be.a('array');
-        assume(!!~servers.indexOf(address)).to.be.true();
+        assume(!!~servers.indexOf('metroplex:server:' + address)).to.be.true();
         next();
       });
     });
@@ -73,7 +73,7 @@ describe('plugin', function () {
     server.once('unregister', function (address) {
       assume(address).to.equal(addr);
 
-      redis.smembers('metroplex:servers', function (err, servers) {
+      redis.get('metroplex:server:' + addr, function (err, servers) {
         if (err) return next(err);
 
         assume(!!~servers).to.be.true();
@@ -91,53 +91,23 @@ describe('plugin', function () {
     });
   });
 
-  it('stores and removes the spark in the sparks hash', function (next) {
+  it('stores and removes the spark', function (next) {
     server.use('metroplex', metroplex);
 
     var client = server.Socket('http://localhost:'+ http.port);
 
     client.id(function (id) {
-      redis.hget('metroplex:sparks', id, function canihas(err, address) {
+      redis.get('metroplex:spark:' + id, function(err, address) {
         if (err) return next(err);
-
         assume(address).to.contain(http.port);
         client.end();
       });
     });
 
     server.once('disconnection', function (spark) {
-      redis.hget('metroplex:sparks', spark.id, function rmshit(err, address) {
+      redis.get('metroplex:spark:' + spark.id, function(err, address) {
         if (err) return next(err);
-
         assume(!address).to.be.true();
-        next();
-      });
-    });
-  });
-
-  it('also stores the spark under the server address', function (next) {
-    server.use('metroplex', metroplex);
-
-    var client = server.Socket(server.metroplex.address);
-
-    client.id(function (id) {
-      redis.smembers('metroplex:'+ server.metroplex.address +':sparks', function (err, sparks) {
-        if (err) return next(err);
-
-        assume(sparks).is.a('array');
-        assume(id).to.equal(sparks[0]);
-
-        client.end();
-      });
-    });
-
-    server.once('disconnection', function (spark) {
-      redis.smembers('metroplex:'+ server.metroplex.address +':sparks', function (err, sparks) {
-        if (err) return next(err);
-
-        assume(sparks).is.a('array');
-        assume(!~sparks.indexOf(spark.id)).to.be.true();
-
         next();
       });
     });
@@ -157,5 +127,114 @@ describe('plugin', function () {
     });
 
     http.listen(portnumber);
+  });
+
+  it('updates the spark TTL when on connection heartbeats', function(next) {
+    server.use('metroplex', metroplex);
+    var client = server.Socket('http://localhost:'+ http.port);
+
+    client.id(function(id) {
+      // set the spark TTL to 500 ms
+      redis.pexpire('metroplex:spark:' + id, 500, function(err) {
+        if(err) return next(err);
+
+        // ping the server
+        client.write('primus::ping::' + (+new Date()));
+
+        // wait for the ping to be received
+        server.spark(id).once('incoming::ping', function() {
+
+          // fetch the TTL again
+          redis.pttl('metroplex:spark:' + id, function(err, ttlAfter) {
+            if(err) return next(err);
+
+            // ensure that the TTL has been reset
+            assume(ttlAfter).is.greaterThan(500);
+            client.end();
+            next();
+          });
+        });
+      });
+    });
+  });
+
+  it('finds the server for a spark', function(next) {
+    server.use('metroplex', metroplex);
+    var client = server.Socket('http://localhost:'+ http.port);
+
+    client.id(function(id) {
+      server.metroplex.spark(id, function(err, address) {
+        if(err) return next(err);
+        assume(address).equals(server.metroplex.address);
+        next();
+      });
+    });
+  });
+
+  it('finds servers for a list of sparks', function(next) {
+    server.use('metroplex', metroplex);
+    var clients = [],
+        numClients = 5;
+
+    for(var i = 0; i < numClients; i++) {
+      server.Socket('http://localhost:'+ http.port).id(function(id) {
+        clients.push(id);
+        if(clients.length == numClients) {
+          server.metroplex.sparks(clients, function(err, addresses) {
+            if(err) return next(err);
+            assume(Object.keys(addresses).length).equals(clients.length);
+            for(var id in addresses) {
+              assume(addresses[id]).equals(server.metroplex.address);
+            }
+
+            next();
+          });
+        }
+      });
+    }
+  });
+
+  it('resets server TTL periodically', function(next) {
+    server.use('metroplex', metroplex);
+    server.once('register', function() {
+      redis.pexpire('metroplex:server:' + server.metroplex.address, 500, function(err) {
+        if(err) return next(error);
+
+        // force the timer to fire every 1ms
+        server.metroplex.latency = server.metroplex.interval - 1;
+        server.metroplex.setInterval();
+        setTimeout(function() {
+          redis.pttl('metroplex:server:' + server.metroplex.address, function(err, ttl) {
+            if(err) return next(err);
+            assume(ttl).is.greaterThan(500);
+            next();
+          });
+        }, 5);
+      });
+    });
+  });
+
+  it('finds a list of active servers', function(next) {
+    server.use('metroplex', metroplex);
+    server.once('register', function(address) {
+      server2.use('metroplex', metroplex);
+
+      server2.once('register', function(address2) {
+        server.metroplex.servers(function(err, list) {
+          if(err) return next(err);
+          // ensure server1 reports only server2
+          assume(list.length).equals(1);
+          assume(list[0]).equals(address2);
+
+          server2.metroplex.servers(function(err, list2) {
+            if(err) return next(err);
+            // ensure server2 reports only server1
+            assume(list2.length).equals(1);
+            assume(list2[0]).equals(address);
+            next();
+          });
+        });
+      });
+    });
   });
 });
