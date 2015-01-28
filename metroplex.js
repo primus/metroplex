@@ -252,7 +252,7 @@ Metroplex.readable('sparks', function sparks(args, fn) {
 Metroplex.readable('setInterval', function setIntervals() {
   if (this.timer) clearInterval(this.timer);
 
-  var alive = this.namespace + this.address +':alive'
+  var alive = this.namespace + this.address
     , redis = this.redis
     , metroplex = this;
 
