@@ -27,9 +27,9 @@
   "homepage": "https://github.com/primus/metroplex",
   "devDependencies": {
     "assume": "1.1.x",
-    "mocha": "2.1.x",
+    "mocha": "2.2.x",
     "omega-supreme": "0.0.x",
-    "pre-commit": "0.0.x",
+    "pre-commit": "1.0.x",
     "primus": "2.4.x",
     "istanbul": "0.3.x",
     "ws": "0.7.x"
