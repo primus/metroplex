@@ -74,7 +74,7 @@ Metroplex.readable('parse', function parse(server) {
   //
   // Seriously, 0.0.0.0 is basically localhost. Get the correct address for it.
   //
-  if (address.address === '0.0.0.0') {
+  if (address.address === '0.0.0.0' || address.address === '::') {
     address.address = ip.address();
   }
 
