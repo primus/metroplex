@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "async": "0.9.x",
-    "eventemitter3": "0.1.x",
+    "eventemitter3": "1.0.x",
     "fusing": "1.0.x",
     "ip": "0.3.x",
     "leverage": "0.1.x",
