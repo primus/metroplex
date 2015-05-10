@@ -120,7 +120,7 @@ on the current server.
 ### Omega Supreme integration
 
 If you load the [`omega-supreme`](https://github.com/primus/omega-supreme/)
-plugin before `metroplex`, you can use some additinal convenience methods.
+plugin before `metroplex`, you can use some additional convenience methods.
 These methods are added to the `primus.forward` object:
 
 #### forward.broadcast
@@ -129,7 +129,7 @@ These methods are added to the `primus.forward` object:
 forward.broadcast(msg, fn)
 ```
 
-Broadcasts a message to all sparks in the cluster.
+Broadcast a message to all sparks in the cluster.
 
 ```js
 forward.broadcast('data', function (err, result) {
@@ -144,7 +144,7 @@ forward.broadcast('data', function (err, result) {
 forward.sparks(ids, msg, fn)
 ```
 
-Sends a message to a set of sparks in the cluster.
+Send a message to a set of sparks in the cluster.
 
 ```js
 forward.sparks(['ad8a-280z-18', 'y97x-42480-13'], 'data', function (err, result) {
@@ -158,7 +158,7 @@ forward.sparks(['ad8a-280z-18', 'y97x-42480-13'], 'data', function (err, result)
 forward.spark(id, msg, fn)
 ```
 
-Sends a message to a single spark in the cluster.
+Send a message to a single spark in the cluster.
 
 ```js
 forward.spark('ad8a-280z-18', 'data', function (err, result) {
