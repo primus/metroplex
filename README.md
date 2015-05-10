@@ -1,6 +1,6 @@
 # Metroplex
 
-[![Version npm](http://img.shields.io/npm/v/metroplex.svg?style=flat-square)](http://browsenpm.org/package/metroplex)[![Build Status](http://img.shields.io/travis/primus/metroplex/master.svg?style=flat-square)](https://travis-ci.org/primus/metroplex)[![Dependencies](https://img.shields.io/david/primus/metroplex.svg?style=flat-square)](https://david-dm.org/primus/metroplex)[![Coverage Status](http://img.shields.io/coveralls/primus/metroplex/master.svg?style=flat-square)](https://coveralls.io/r/primus/metroplex?branch=master)[![IRC channel](http://img.shields.io/badge/IRC-irc.freenode.net%23primus-00a8ff.svg?style=flat-square)](http://webchat.freenode.net/?channels=primus)
+[![Version npm](https://img.shields.io/npm/v/metroplex.svg?style=flat-square)](http://browsenpm.org/package/metroplex)[![Build Status](https://img.shields.io/travis/primus/metroplex/master.svg?style=flat-square)](https://travis-ci.org/primus/metroplex)[![Dependencies](https://img.shields.io/david/primus/metroplex.svg?style=flat-square)](https://david-dm.org/primus/metroplex)[![Coverage Status](https://img.shields.io/coveralls/primus/metroplex/master.svg?style=flat-square)](https://coveralls.io/r/primus/metroplex?branch=master)[![IRC channel](https://img.shields.io/badge/IRC-irc.freenode.net%23primus-00a8ff.svg?style=flat-square)](https://webchat.freenode.net/?channels=primus)
 
 Metroplex a Redis based spark/connection registry for Primus.
 
@@ -117,8 +117,57 @@ Get the servers for each id in the given `sparks` array. It will return an
 object and just like `metroplex.spark` it does not check if the spark is hosted
 on the current server.
 
+### Omega Supreme integration
+
+If you load the [`omega-supreme`](https://github.com/primus/omega-supreme/)
+plugin before `metroplex`, you can use some additinal convenience methods.
+These methods are added to the `primus.forward` object:
+
+#### forward.broadcast
+
+```js
+forward.broadcast(msg, fn)
+```
+
+Broadcasts a message to all sparks in the cluster.
+
+```js
+forward.broadcast('data', function (err, result) {
+  // result is an object with details about the result of the operation.
+  console.log(result);
+});
+```
+
+#### forward.sparks
+
+```
+forward.sparks(ids, msg, fn)
+```
+
+Sends a message to a set of sparks in the cluster.
+
+```js
+forward.sparks(['ad8a-280z-18', 'y97x-42480-13'], 'data', function (err, result) {
+  console.log(result);
+});
+```
+
+#### forward.spark
+
+```
+forward.spark(id, msg, fn)
+```
+
+Sends a message to a single spark in the cluster.
+
+```js
+forward.spark('ad8a-280z-18', 'data', function (err, result) {
+  console.log(result);
+});
+```
+
 ## License
 
-MIT
+[MIT](LICENSE)
 
 ![Metroplex](https://raw.githubusercontent.com/primus/metroplex/master/logo.jpg)
