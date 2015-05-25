@@ -105,7 +105,7 @@ Metroplex.readable('register', function register(address, fn) {
     }
 
     metroplex.redis.multi()
-      .setex(metroplex.namespace + metroplex.address, metroplex.interval, Date.now())
+      .psetex(metroplex.namespace + metroplex.address, metroplex.interval, Date.now())
       .sadd(metroplex.namespace +'servers', metroplex.address)
     .exec(function register(err) {
       if (err) {
@@ -256,11 +256,7 @@ Metroplex.readable('setInterval', function setIntervals() {
     , metroplex = this;
 
   this.timer = setInterval(function interval() {
-    //
-    // Redis expects the expire value in seconds instead of milliseconds so we
-    // need to correct our interval.
-    //
-    redis.setex(alive, metroplex.interval / 1000, Date.now());
+    redis.psetex(alive, metroplex.interval, Date.now());
 
     metroplex.servers(function servers(err, list) {
       if (err) return metroplex.emit('error', err);
