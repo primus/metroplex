@@ -146,7 +146,7 @@ Metroplex.readable('unregister', function unregister(address, fn) {
 
     metroplex.emit('unregister', address);
 
-    if (metroplex.timer) clearInterval(metroplex.timer);
+    clearInterval(metroplex.timer);
     if (fn) fn(err, address);
   });
 
@@ -249,7 +249,7 @@ Metroplex.readable('sparks', function sparks(ids, fn) {
  * @api private
  */
 Metroplex.readable('setInterval', function setIntervals() {
-  if (this.timer) clearInterval(this.timer);
+  clearInterval(this.timer);
 
   var alive = this.namespace + this.address
     , redis = this.redis
