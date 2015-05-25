@@ -13,23 +13,17 @@ describe('plugin', function () {
     , http;
 
   beforeEach(function each(next) {
-    http = require('http').createServer();
     http2 = require('http').createServer();
+    http = require('http').createServer();
 
-    server = new Primus(http, {
-      transformer: 'websockets',
-      redis: redis
-    });
+    server2 = new Primus(http2);
+    server = new Primus(http);
 
-    server2 = new Primus(http2, {
-      transformer: 'websockets'
-    });
-
-    http.port = port++;
     http2.port = port++;
+    http.port = port++;
 
-    http.url = 'http://localhost:'+ http.port;
     http2.url = 'http://localhost:'+ http2.port;
+    http.url = 'http://localhost:'+ http.port;
 
     http.listen(http.port, function () {
       http2.listen(http2.port, function () {
@@ -94,19 +88,21 @@ describe('plugin', function () {
   it('stores and removes the spark in the sparks hash', function (next) {
     server.use('metroplex', metroplex);
 
-    var client = server.Socket('http://localhost:'+ http.port);
+    server.once('register', function (address) {
+      var client = server.Socket(address);
 
-    client.id(function (id) {
-      redis.hget('metroplex:sparks', id, function canihas(err, address) {
-        if (err) return next(err);
+      client.id(function (id) {
+        redis.hget('metroplex:sparks', id, function (err, address) {
+          if (err) return next(err);
 
-        assume(address).to.contain(http.port);
-        client.end();
+          assume(address).to.contain(http.port);
+          client.end();
+        });
       });
     });
 
     server.once('disconnection', function (spark) {
-      redis.hget('metroplex:sparks', spark.id, function rmshit(err, address) {
+      redis.hget('metroplex:sparks', spark.id, function (err, address) {
         if (err) return next(err);
 
         assume(!address).to.be.true();
@@ -118,16 +114,18 @@ describe('plugin', function () {
   it('also stores the spark under the server address', function (next) {
     server.use('metroplex', metroplex);
 
-    var client = server.Socket(server.metroplex.address);
+    server.once('register', function (address) {
+      var client = server.Socket(address);
 
-    client.id(function (id) {
-      redis.smembers('metroplex:'+ server.metroplex.address +':sparks', function (err, sparks) {
-        if (err) return next(err);
+      client.id(function (id) {
+        redis.smembers('metroplex:'+ address +':sparks', function (err, sparks) {
+          if (err) return next(err);
 
-        assume(sparks).is.a('array');
-        assume(id).to.equal(sparks[0]);
+          assume(sparks).is.a('array');
+          assume(id).to.equal(sparks[0]);
 
-        client.end();
+          client.end();
+        });
       });
     });
 
@@ -153,9 +151,46 @@ describe('plugin', function () {
 
     http.once('listening', function () {
       assume(primus.metroplex.address).to.contain(portnumber);
-      next();
+      primus.destroy(next);
     });
 
     http.listen(portnumber);
+  });
+
+  it('finds servers for a list of sparks', function (next) {
+    server.use('metroplex', metroplex);
+    server2.use('metroplex', metroplex);
+
+    var clients = []
+      , length = 10;
+
+    function push(address) {
+      return function (id) {
+        clients.push({ id: id, address: address });
+
+        if (clients.length === length) {
+          server.metroplex.sparks(clients.map(function (client) {
+            return client.id;
+          }), function (err, addresses) {
+            if (err) return next(err);
+
+            clients.forEach(function (client, i) {
+              assume(client.address).equals(addresses[i]);
+            });
+
+            next();
+          });
+        }
+      };
+    }
+
+    server.once('register', function (address) {
+      var len = length / 2;
+      while (len--) new server.Socket(address).id(push(address));
+    });
+    server2.once('register', function (address) {
+      var len = length / 2;
+      while (len--) new server2.Socket(address).id(push(address));
+    });
   });
 });

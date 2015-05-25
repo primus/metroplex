@@ -133,7 +133,7 @@ Metroplex.readable('unregister', function unregister(address, fn) {
   var metroplex = this;
 
   address = this.parse(address || metroplex.address);
-  if (!metroplex.address) {
+  if (!address) {
     if (fn) fn();
     return this;
   }
@@ -227,16 +227,15 @@ Metroplex.readable('spark', function spark(id, fn) {
 /**
  * Get all server addresses for the given spark ids.
  *
- * @param {Array} args The spark id's we need to look up
+ * @param {Array} ids The spark id's we need to look up
  * @param {Function} fn Callback.
  * @returns {Metroplex}
  * @api public
  */
-Metroplex.readable('sparks', function sparks(args, fn) {
-  args.push(fn);
-  args.shift(this.namespace +'sparks');
-  this.redis.hmget.apply(this.redis, args);
+Metroplex.readable('sparks', function sparks(ids, fn) {
+  var key = this.namespace +'sparks';
 
+  this.redis.hmget.apply(this.redis, [key].concat(ids).concat(fn));
   return this;
 });
 
