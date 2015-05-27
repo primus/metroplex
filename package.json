@@ -1,6 +1,6 @@
 {
   "name": "metroplex",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Metroplex is capable of transforming into a battle station, giant robot or a distributed connect client directory for Primus.",
   "main": "index.js",
   "scripts": {
@@ -35,7 +35,7 @@
     "ws": "0.7.x"
   },
   "dependencies": {
-    "async": "0.9.x",
+    "async": "1.0.x",
     "eventemitter3": "1.1.x",
     "fusing": "1.0.x",
     "ip": "0.3.x",
