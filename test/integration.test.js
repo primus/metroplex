@@ -1,7 +1,7 @@
 describe('plugin', function () {
   'use strict';
 
-  var redis = require('redis').createClient()
+  var redis = new require('ioredis')()
     , assume = require('assume')
     , Primus = require('primus')
     , metroplex = require('../');

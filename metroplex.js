@@ -1,16 +1,10 @@
 'use strict';
 
-var Leverage = require('leverage')
-  , https = require('https')
+var https = require('https')
   , fuse = require('fusing')
-  , ip = require('ip');
-
-//
-// Ensure that the directory for our custom lua scripts is set correctly.
-//
-Leverage.scripts = Leverage.scripts.concat(
-  Leverage.introduce(require('path').join(__dirname, 'redis'), Leverage.prototype)
-);
+  , path = require('path')
+  , ip = require('ip')
+  , fs = require('fs');
 
 /**
  * Add defaults to the supplied options. The following options are available:
@@ -32,17 +26,20 @@ function Metroplex(primus, options) {
   options = options || {};
   primus = primus || {};
 
-  var parsed = this.parse(primus.server);
+  var lua = fs.readFileSync(path.join(__dirname, 'redis/annihilate.lua'), 'utf8')
+    , parsed = this.parse(primus.server);
 
   this.fuse();
 
-  this.redis = options.redis || require('redis').createClient();
+  this.redis = options.redis || new require('ioredis')();
   this.namespace = (options.namespace || 'metroplex') +':';
   this.interval = options.interval || 5 * 60 * 1000;
   this.timeout = options.timeout || 30 * 60;
   this.latency = options.latency || 2000;
-  this.leverage = new Leverage(this.redis, {
-    namespace: this.namespace
+
+  this.redis.defineCommand('annihilate', {
+    lua: lua.replace('{leverage::namespace}', this.namespace),
+    numberOfKeys: 1
   });
 
   if (parsed || options.address) {
@@ -90,21 +87,22 @@ Metroplex.readable('parse', function parse(server) {
  * @api public
  */
 Metroplex.readable('register', function register(address, fn) {
-  var metroplex = this;
+  var redis = this.redis
+    , metroplex = this;
 
-  metroplex.address = this.parse(address || metroplex.address);
+  metroplex.address = this.parse(address);
   if (!metroplex.address) {
     if (fn) fn();
     return this;
   }
 
-  metroplex.leverage.annihilate(metroplex.address, function annihilate(err) {
+  redis.annihilate(metroplex.address, function annihilate(err) {
     if (err) {
       if (fn) return fn(err);
       return metroplex.emit('error', err);
     }
 
-    metroplex.redis.multi()
+    redis.multi()
       .psetex(metroplex.namespace + metroplex.address, metroplex.interval, Date.now())
       .sadd(metroplex.namespace +'servers', metroplex.address)
     .exec(function register(err) {
@@ -119,6 +117,8 @@ Metroplex.readable('register', function register(address, fn) {
       if (fn) fn(err, metroplex.address);
     });
   });
+
+  return this;
 });
 
 /**
@@ -138,7 +138,7 @@ Metroplex.readable('unregister', function unregister(address, fn) {
     return this;
   }
 
-  metroplex.leverage.annihilate(address, function annihilate(err) {
+  metroplex.redis.annihilate(address, function annihilate(err) {
     if (err) {
       if (fn) return fn(err);
       return metroplex.emit('error', err);
@@ -200,7 +200,7 @@ Metroplex.readable('servers', function servers(self, fn) {
     self = 0;
   }
 
-  this.redis.smembers(this.namespace +'servers', function smembers(err, members) {
+  metroplex.redis.smembers(this.namespace +'servers', function smembers(err, members) {
     if (self) return fn(err, members);
 
     fn(err, (members || []).filter(function filter(address) {
@@ -265,7 +265,7 @@ Metroplex.readable('setInterval', function setIntervals() {
         redis.get(metroplex.namespace + address, function get(err, stamp) {
           if (err || Date.now() - +stamp < metroplex.interval) return;
 
-          metroplex.leverage.annihilate(address, function murdered(err) {
+          redis.annihilate(address, function murdered(err) {
             if (err) return metroplex.emit('error', err);
           });
         });
