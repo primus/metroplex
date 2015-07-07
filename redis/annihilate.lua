@@ -6,7 +6,7 @@ local address = assert(KEYS[1], 'The server address is missing')
 
 --
 -- Get all the sparks for our given address so we can nuke them from our "global"
--- spark registry>
+-- spark registry.
 --
 local sparks = redis.call('SMEMBERS', namespace .. address ..':sparks')
 
@@ -20,7 +20,7 @@ end
 
 --
 -- Delete all left over references to this server address which are:
--- 
+--
 -- 1. Our dedicated sparks set
 -- 2. Our server in the servers list
 -- 3. The keep alive server update

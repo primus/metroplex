@@ -34,7 +34,8 @@ this plugin:
 - *redis*: Metroplex is currently using Redis as its default back-end for storing
   the state of the connections. If you do not supply us with a pre-defined Redis
   client (or authorized) we will create a Redis client which only connects to
-  localhost and Redis's default port number.
+  localhost and Redis's default port number. When provided this must be an
+  [`ioredis`](https://github.com/luin/ioredis) client.
 - *namespace*: As the databases are usually shared with other programs it's good
   to prefix all the data that you store, in Metroplex we prefix every key with
   the set namespace. The default namespace is `metroplex`.
