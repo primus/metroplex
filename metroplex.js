@@ -186,56 +186,58 @@ Metroplex.readable('disconnect', function disconnect(spark) {
 });
 
 /**
- * Get all current registered servers except our selfs.
+ * Get all the servers in the registry or the servers for the given spark id(s).
  *
- * @param {Function} fn Callback
- * @returns {Metroplex}
- * @api public
- */
-Metroplex.readable('servers', function servers(self, fn) {
-  var metroplex = this;
-
-  if ('boolean' !== typeof self) {
-    fn = self;
-    self = 0;
-  }
-
-  metroplex.redis.smembers(this.namespace +'servers', function smembers(err, members) {
-    if (self) return fn(err, members);
-
-    fn(err, (members || []).filter(function filter(address) {
-      return address !== metroplex.address;
-    }));
-  });
-
-  return this;
-});
-
-/**
- * Get the server address for a given spark id.
- *
- * @param {String} id The spark id who's server address we want to retrieve.
- * @param {Function} fn Callback
- * @returns {Metroplex}
- * @api public
- */
-Metroplex.readable('spark', function spark(id, fn) {
-  this.redis.hget(this.namespace +'sparks', id, fn);
-  return this;
-});
-
-/**
- * Get all server addresses for the given spark ids.
- *
- * @param {Array} ids The spark id's we need to look up
+ * @param {Boolean} [self] Whether to include ourselves in the result.
+ * @param {String|Array<String>} [sparks] A spark id or an array of spark ids.
  * @param {Function} fn Callback.
  * @returns {Metroplex}
  * @api public
  */
-Metroplex.readable('sparks', function sparks(ids, fn) {
-  var key = this.namespace +'sparks';
+Metroplex.readable('servers', function servers(self, sparks, fn) {
+  var namespace = this.namespace
+    , redis = this.redis
+    , metroplex = this;
 
-  this.redis.hmget.apply(this.redis, [key].concat(ids).concat(fn));
+  if ('boolean' !== typeof self) {
+    fn = sparks;
+    sparks = self;
+    self = false;
+  }
+
+  if ('function' === typeof sparks) {
+    fn = sparks;
+    sparks = null;
+  }
+
+  if (!sparks) {
+    redis.smembers(namespace +'servers', function smembers(err, members) {
+      if (self) return fn(err, members);
+
+      fn(err, (members || []).filter(function filter(address) {
+        return address !== metroplex.address;
+      }));
+    });
+  } else if (Array.isArray(sparks)) {
+    redis.hmget.apply(redis, [namespace +'sparks'].concat(sparks).concat(fn));
+  } else {
+    redis.hget(namespace +'spark', sparks, fn);
+  }
+
+  return this;
+});
+
+/**
+ * Get all the spark ids for the given server address.
+ *
+ * @param {String} address The server address.
+ * @param {Function} fn Callback.
+ * @returns {Metroplex}
+ * @api public
+ */
+Metroplex.readable('sparks', function sparks(address, fn) {
+  this.redis.smembers(this.namespace + this.address +':sparks', fn);
+
   return this;
 });
 

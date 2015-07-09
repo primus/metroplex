@@ -6,7 +6,7 @@ Metroplex a Redis based spark/connection registry for Primus.
 
 ## Installation
 
-Metroplex is released in the npm registry and can therefor be installed using:
+Metroplex is released in the npm registry and can therefore be installed using:
 
 ```
 npm install --save metroplex
@@ -43,15 +43,15 @@ this plugin:
   node process is still alive. The interval determines the interval of these
   updates. When the interval is reached we update the key in the database with
   the current EPOCH as well as start a scan for possible dead servers and
-  removing them. The default interval `300000` ms
+  removing them. The default interval `300000` ms.
 - *latency*: The maximum time it would take to update the `alive` key in Redis.
   This time is subtracted from the set `interval` so we update the key BEFORE
   it expires. Defaults to `2000` ms.
 - *address* The address or public URL on which this SPECIFIC server is
   reachable. Should be without path name. When nothing is supplied we try to be
-  somewhat smart and read the address and port and server type from the server
-  that Primus is attached to and compose an URL like: `http://0.0.0.0:8080` from
-  it.
+  somewhat smart and read the address, the port and the type of the server from
+  the server that Primus is attached to and compose an URL like:
+  `http://0.0.0.0:8080` from it.
 
 These options should be provided in the options object of the Primus server:
 
@@ -82,41 +82,64 @@ The following **public** methods are available.
 #### metroplex.servers
 
 ```js
-metroplex.servers(fn)
+metroplex.servers(self, sparks, fn)
 ```
 
-List all the servers in our current registry.
+This method returns all the servers in the registry or the servers for the
+given spark ids. It takes the following arguments:
+
+##### self
+
+An optional boolean flag to specify if the result should include the current
+server or not. It defaults to `false` and has no effect if the `sparks`
+argument is provided.
 
 ```js
-metroplex.servers(function (err, servers) {
+metroplex.servers(true, function (err, servers) {
+  // `servers` is an array with all the servers in the registry.
   console.log(servers);
 });
 ```
 
-#### metroplex.spark
+##### sparks
+
+A spark id or an array of spark ids. If this argument is provided the method
+returns only the server for the given spark ids. We don't check if the spark
+id/s is/are hosted on the current server. It's up to the developer to prevent
+useless database calls.
 
 ```js
-metroplex.spark(id, fn)
-```
-
-Get the server for the given spark id. It does not check if the spark is hosted
-on the current server. That's up to the developer to implement.
-
-```js
-metroplex.spark(id, function (err, server) {
-  console.log(server);
+metroplex.servers(['ad8a-280z-18', 'y97x-42480-13'], function (err, servers) {
+  // `servers` is an array with the servers of the two sparks.
+  console.log(servers);
 });
 ```
+
+```js
+metroplex.servers('ad8a-280z-18', function (err, address) {
+  // `address` is the server of the given spark.
+  console.log(address);
+});
+```
+
+##### fn
+
+A callback function that follows the usual error first pattern.
 
 #### metroplex.sparks
 
 ```js
-metroplex.sparks(sparks, fn)
+metroplex.sparks(address, fn)
 ```
 
-Get the servers for each id in the given `sparks` array. It will return an
-object and just like `metroplex.spark` it does not check if the spark is hosted
-on the current server.
+This method returns all the spark ids for the given server address.
+
+```js
+metroplex.sparks('http://192.168.0.10:3000', function (err, ids) {
+  // `ids` is an array of spark ids.
+  console.log(ids);
+});
+```
 
 ### Omega Supreme integration
 
