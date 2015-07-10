@@ -56,11 +56,9 @@ module.exports = function forwards(primus) {
     metroplex.sparks(ids, function sparks(err, servers) {
       if (err) return fn(err);
 
-      servers = Object.keys(servers).reduce(function fn(memo, spark) {
-        var address = servers[spark];
-
+      servers = servers.reduce(function fn(memo, address, i) {
         memo[address] = memo[address] || [];
-        memo[address].push(spark);
+        memo[address].push(ids[i]);
 
         return memo;
       }, {});
