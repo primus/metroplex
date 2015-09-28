@@ -4,9 +4,9 @@
   "description": "Metroplex is capable of transforming into a battle station, giant robot or a distributed connect client directory for Primus.",
   "main": "index.js",
   "scripts": {
-    "coverage": "istanbul cover node_modules/.bin/_mocha -- test/*.test.js",
+    "coverage": "istanbul cover _mocha -- test/*.test.js",
     "test": "mocha test/*.test.js",
-    "test-travis": "istanbul cover node_modules/.bin/_mocha --report lcovonly -- test/*.test.js"
+    "test-travis": "istanbul cover _mocha --report lcovonly -- test/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -26,19 +26,19 @@
   },
   "homepage": "https://github.com/primus/metroplex",
   "devDependencies": {
-    "assume": "1.2.x",
-    "mocha": "2.2.x",
+    "assume": "1.3.x",
+    "mocha": "2.3.x",
     "omega-supreme": "0.0.x",
-    "pre-commit": "1.0.x",
-    "primus": "3.1.x",
+    "pre-commit": "1.1.x",
+    "primus": "3.2.x",
     "istanbul": "0.3.x",
-    "ws": "0.7.x"
+    "ws": "0.8.x"
   },
   "dependencies": {
-    "async": "1.3.x",
+    "async": "1.4.x",
     "eventemitter3": "1.1.x",
     "fusing": "1.0.x",
-    "ip": "0.3.x",
-    "ioredis": "1.5.x"
+    "ip": "1.0.x",
+    "ioredis": "1.9.x"
   }
 }
