@@ -30,7 +30,7 @@
     "mocha": "2.3.x",
     "omega-supreme": "0.0.x",
     "pre-commit": "1.1.x",
-    "primus": "3.2.x",
+    "primus": "4.0.x",
     "istanbul": "0.3.x",
     "ws": "0.8.x"
   },
