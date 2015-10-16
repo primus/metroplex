@@ -63,7 +63,7 @@ module.exports = function forwards(primus) {
         return memo;
       }, {});
 
-      async.each(Object.keys(servers), function each(server, next) {
+      async.map(Object.keys(servers), function map(server, next) {
         forward(server, msg, servers[server], next);
       }, function calculate(err, reached) {
         if (err) return fn(err, reached);
