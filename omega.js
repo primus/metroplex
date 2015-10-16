@@ -57,6 +57,11 @@ module.exports = function forwards(primus) {
       if (err) return fn(err);
 
       servers = servers.reduce(function fn(memo, address, i) {
+        //
+        // Filter out the dead sparks.
+        //
+        if (!address) return memo;
+
         memo[address] = memo[address] || [];
         memo[address].push(ids[i]);
 
