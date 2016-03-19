@@ -27,18 +27,18 @@
   "homepage": "https://github.com/primus/metroplex",
   "devDependencies": {
     "assume": "1.3.x",
-    "mocha": "2.3.x",
-    "omega-supreme": "0.0.x",
+    "mocha": "2.4.x",
+    "omega-supreme": "1.0.x",
     "pre-commit": "1.1.x",
-    "primus": "4.0.x",
-    "istanbul": "0.3.x",
-    "ws": "0.8.x"
+    "primus": "5.0.x",
+    "istanbul": "0.4.x",
+    "ws": "1.0.x"
   },
   "dependencies": {
-    "async": "1.4.x",
-    "eventemitter3": "1.1.x",
+    "async": "1.5.x",
+    "eventemitter3": "1.2.x",
     "fusing": "1.0.x",
-    "ip": "1.0.x",
-    "ioredis": "1.9.x"
+    "ip": "1.1.x",
+    "ioredis": "1.15.x"
   }
 }
