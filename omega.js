@@ -53,7 +53,7 @@ module.exports = function forwards(primus) {
   forward.sparks = function sparks(ids, msg, fn) {
     fn = fn || nope;
 
-    metroplex.sparks(ids, function sparks(err, servers) {
+    metroplex.servers(ids, function sparks(err, servers) {
       if (err) return fn(err);
 
       servers = servers.reduce(function fn(memo, address, i) {
@@ -84,9 +84,9 @@ module.exports = function forwards(primus) {
   };
 
   /**
-   * Forward the message to a specific spark
+   * Forward the message to a specific spark.
    *
-   * @param {String} id Spark id
+   * @param {String} id Spark id.
    * @param {Mixed} msg Message to broadcast.
    * @param {Function} fn Completion callback.
    * @returns {Forward}
@@ -95,7 +95,7 @@ module.exports = function forwards(primus) {
   forward.spark = function spark(id, msg, fn) {
     fn = fn || nope;
 
-    metroplex.spark(id, function spark(err, server) {
+    metroplex.servers(id, function spark(err, server) {
       if (err) return fn(err);
 
       forward(server, msg, id, fn);

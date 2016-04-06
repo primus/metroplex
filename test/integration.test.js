@@ -157,11 +157,13 @@ describe('plugin', function () {
     http.listen(portnumber);
   });
 
-  it('finds servers for a list of sparks', function (next) {
+  it('finds the servers for a list of sparks', function (next) {
     server.use('metroplex', metroplex);
     server2.use('metroplex', metroplex);
 
-    var clients = []
+    var Socket2 = server2.Socket
+      , Socket = server.Socket
+      , clients = []
       , length = 10;
 
     function push(address) {
@@ -169,7 +171,7 @@ describe('plugin', function () {
         clients.push({ id: id, address: address });
 
         if (clients.length === length) {
-          server.metroplex.sparks(clients.map(function (client) {
+          server.metroplex.servers(clients.map(function (client) {
             return client.id;
           }), function (err, addresses) {
             if (err) return next(err);
@@ -186,11 +188,42 @@ describe('plugin', function () {
 
     server.once('register', function (address) {
       var len = length / 2;
-      while (len--) new server.Socket(address).id(push(address));
+      while (len--) new Socket(address).id(push(address));
     });
     server2.once('register', function (address) {
       var len = length / 2;
-      while (len--) new server2.Socket(address).id(push(address));
+      while (len--) new Socket2(address).id(push(address));
+    });
+  });
+
+  it('finds the sparks in a server', function (next) {
+    server.use('metroplex', metroplex);
+
+    var Socket = server.Socket
+      , clients = []
+      , length = 10;
+
+    function push(address) {
+      return function (id) {
+        clients.push(id);
+
+        if (clients.length === length) {
+          server.metroplex.sparks(address, function (err, sparks) {
+            if (err) return next(err);
+
+            clients.forEach(function (id) {
+              assume(sparks.indexOf(id)).is.above(-1);
+            });
+
+            next();
+          });
+        }
+      };
+    }
+
+    server.once('register', function (address) {
+      var len = length;
+      while (len--) new Socket(address).id(push(address));
     });
   });
 });
