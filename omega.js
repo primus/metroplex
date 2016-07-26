@@ -1,6 +1,6 @@
 'use strict';
 
-var async = require('async');
+var map = require('async/map');
 
 /**
  * A nope function allows for an optional callback pattern.
@@ -68,7 +68,7 @@ module.exports = function forwards(primus) {
         return memo;
       }, {});
 
-      async.map(Object.keys(servers), function map(server, next) {
+      map(Object.keys(servers), function iteratee(server, next) {
         forward(server, msg, servers[server], next);
       }, function calculate(err, reached) {
         if (err) return fn(err, reached);
