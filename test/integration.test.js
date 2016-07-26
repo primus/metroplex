@@ -39,7 +39,7 @@ describe('plugin', function () {
   });
 
   it('emits a register event', function (next) {
-    server.use('metroplex', metroplex);
+    server.plugin('metroplex', metroplex);
     server.once('register', function (address) {
       assume(address).to.contain(http.port);
       next();
@@ -47,7 +47,7 @@ describe('plugin', function () {
   });
 
   it('has added server to redis after the register event', function (next) {
-    server.use('metroplex', metroplex);
+    server.plugin('metroplex', metroplex);
     server.once('register', function (address) {
       redis.smembers('metroplex:servers', function (err, servers) {
         if (err) return next(err);
@@ -60,7 +60,7 @@ describe('plugin', function () {
   });
 
   it('removes the added server when primus closes', function (next) {
-    server.use('metroplex', metroplex);
+    server.plugin('metroplex', metroplex);
 
     var addr;
 
@@ -86,7 +86,7 @@ describe('plugin', function () {
   });
 
   it('stores and removes the spark in the sparks hash', function (next) {
-    server.use('metroplex', metroplex);
+    server.plugin('metroplex', metroplex);
 
     server.once('register', function (address) {
       var client = server.Socket(address);
@@ -112,7 +112,7 @@ describe('plugin', function () {
   });
 
   it('also stores the spark under the server address', function (next) {
-    server.use('metroplex', metroplex);
+    server.plugin('metroplex', metroplex);
 
     server.once('register', function (address) {
       var client = server.Socket(address);
@@ -146,7 +146,7 @@ describe('plugin', function () {
       , primus = new Primus(http, { redis: redis })
       , portnumber = port++;
 
-    primus.use('metroplex', metroplex);
+    primus.plugin('metroplex', metroplex);
     assume(primus.metroplex.address).to.be.falsey();
 
     http.once('listening', function () {
@@ -158,8 +158,8 @@ describe('plugin', function () {
   });
 
   it('finds servers for a list of sparks', function (next) {
-    server.use('metroplex', metroplex);
-    server2.use('metroplex', metroplex);
+    server.plugin('metroplex', metroplex);
+    server2.plugin('metroplex', metroplex);
 
     var clients = []
       , length = 10;
