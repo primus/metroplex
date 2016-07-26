@@ -13,7 +13,7 @@ npm install --save metroplex
 ```
 
 Once you've installed the module you need to tell Primus to use the plugin which
-is done using the `primus.use` method:
+is done using the `primus.plugin` method:
 
 ```js
 'use strict';
@@ -22,7 +22,7 @@ var http = require('http').createServer()
   , Primus = require('primus')
   , primus = new Primus(http, { transformer: 'sockjs' });
 
-primus.use('metroplex', require('metroplex'));
+primus.plugin('metroplex', require('metroplex'));
 ```
 
 ## Usage
@@ -62,7 +62,7 @@ primus = new Primus(http, {
   redis: require('redis').createClient()
 });
 
-primus.use('metroplex', require('metroplex'));
+primus.plugin('metroplex', require('metroplex'));
 ```
 
 ### Metroplex
