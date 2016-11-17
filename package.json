@@ -27,7 +27,7 @@
   "homepage": "https://github.com/primus/metroplex",
   "devDependencies": {
     "assume": "1.4.x",
-    "mocha": "2.5.x",
+    "mocha": "3.1.x",
     "omega-supreme": "2.0.x",
     "pre-commit": "1.1.x",
     "primus": "6.0.x",
@@ -35,10 +35,10 @@
     "ws": "1.1.x"
   },
   "dependencies": {
-    "async": "2.0.x",
-    "eventemitter3": "1.2.x",
+    "async": "2.1.x",
+    "eventemitter3": "2.0.x",
     "fusing": "1.0.x",
     "ip": "1.1.x",
-    "ioredis": "2.2.x"
+    "ioredis": "2.4.x"
   }
 }
