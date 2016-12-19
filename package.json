@@ -29,7 +29,7 @@
     "assume": "~1.4.1",
     "istanbul": "~0.4.5",
     "mocha": "~3.2.0",
-    "omega-supreme": "~2.0.0",
+    "omega-supreme": "~2.1.0",
     "pre-commit": "~1.2.0",
     "primus": "~6.0.5",
     "ws": "~1.1.1"
