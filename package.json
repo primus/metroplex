@@ -35,7 +35,7 @@
     "ws": "~2.3.0"
   },
   "dependencies": {
-    "async": "~2.3.0",
+    "async": "~2.4.0",
     "eventemitter3": "~2.0.2",
     "fusing": "~1.0.0",
     "ioredis": "~3.0.0-0",
