@@ -32,7 +32,7 @@
     "omega-supreme": "~2.1.0",
     "pre-commit": "~1.2.0",
     "primus": "~7.1.0",
-    "ws": "~3.1.0"
+    "ws": "~3.2.0"
   },
   "dependencies": {
     "async": "~2.5.0",
