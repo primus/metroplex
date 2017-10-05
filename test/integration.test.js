@@ -1,23 +1,33 @@
 describe('plugin', function () {
   'use strict';
 
-  var redis = new require('ioredis')()
-    , assume = require('assume')
+  var assume = require('assume')
     , Primus = require('primus')
+    , Redis = require('ioredis')
     , metroplex = require('../');
 
   var port = 1024
     , server2
     , server
+    , redis
     , http2
     , http;
+
+  before(function (next) {
+    redis = new Redis();
+    redis.on('connect', next);
+  });
+
+  after(function () {
+    return redis.quit();
+  });
 
   beforeEach(function each(next) {
     http2 = require('http').createServer();
     http = require('http').createServer();
 
-    server2 = new Primus(http2);
-    server = new Primus(http);
+    server2 = new Primus(http2, { redis });
+    server = new Primus(http, { redis });
 
     http2.port = port++;
     http.port = port++;
@@ -26,15 +36,15 @@ describe('plugin', function () {
     http.url = 'http://localhost:'+ http.port;
 
     http.listen(http.port, function () {
-      http2.listen(http2.port, function () {
-        redis.flushall(next);
-      });
+      http2.listen(http2.port, next);
     });
   });
 
   afterEach(function each(next) {
     server.destroy(function () {
-      server2.destroy(next);
+      server2.destroy(function () {
+        redis.flushdb(next);
+      });
     });
   });
 

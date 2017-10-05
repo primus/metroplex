@@ -12,7 +12,7 @@ var Metroplex = module.exports = require('./metroplex');
  * @param {Object} options The options that were supplied to Primus.
  * @api public
  */
-Metroplex.server = function server(primus, options)  {
+Metroplex.server = function server(primus, options) {
   var metroplex = new Metroplex(primus, options);
 
   primus.on('connection', function connection(spark) {
