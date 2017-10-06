@@ -26,8 +26,15 @@ function Metroplex(primus, options) {
   options = options || {};
   primus = primus || {};
 
-  var lua = fs.readFileSync(path.join(__dirname, 'redis/annihilate.lua'), 'utf8')
-    , parsed = this.parse(primus.server);
+  var annihilate = fs.readFileSync(
+    path.join(__dirname, 'redis/annihilate.lua'),
+    'utf8'
+  );
+  var register = fs.readFileSync(
+    path.join(__dirname, 'redis/register.lua'),
+    'utf8'
+  );
+  var parsed = this.parse(primus.server);
 
   this.fuse();
 
@@ -38,7 +45,11 @@ function Metroplex(primus, options) {
   this.latency = options.latency || 2000;
 
   this.redis.defineCommand('annihilate', {
-    lua: lua.replace('{leverage::namespace}', this.namespace),
+    lua: annihilate.replace('{namespace}', this.namespace),
+    numberOfKeys: 1
+  });
+  this.redis.defineCommand('register', {
+    lua: register.replace('{namespace}', this.namespace),
     numberOfKeys: 1
   });
 
@@ -82,40 +93,28 @@ Metroplex.readable('parse', function parse(server) {
  * Register a new server/address in the Metroplex registry.
  *
  * @param {String|Server} address The server to add.
- * @param {Function} fn Optional callback;
+ * @param {Function} fn Optional callback.
  * @returns {Metroplex}
  * @api public
  */
 Metroplex.readable('register', function register(address, fn) {
-  var redis = this.redis
-    , metroplex = this;
-
-  metroplex.address = this.parse(address);
-  if (!metroplex.address) {
+  this.address = this.parse(address);
+  if (!this.address) {
     if (fn) fn();
     return this;
   }
 
-  redis.annihilate(metroplex.address, function annihilate(err) {
+  var metroplex = this;
+  this.redis.register(this.address, this.interval, Date.now(), function record(err) {
     if (err) {
       if (fn) return fn(err);
       return metroplex.emit('error', err);
     }
 
-    redis.multi()
-      .psetex(metroplex.namespace + metroplex.address, metroplex.interval, Date.now())
-      .sadd(metroplex.namespace +'servers', metroplex.address)
-    .exec(function register(err) {
-      if (err) {
-        if (fn) return fn(err);
-        return metroplex.emit('error', err);
-      }
+    metroplex.emit('register', metroplex.address);
+    metroplex.setInterval();
 
-      metroplex.emit('register', metroplex.address);
-      metroplex.setInterval();
-
-      if (fn) fn(err, metroplex.address);
-    });
+    if (fn) fn(err, metroplex.address);
   });
 
   return this;
@@ -164,7 +163,7 @@ Metroplex.readable('connect', function connect(spark) {
   this.redis.multi()
     .hset(this.namespace +'sparks', spark.id, this.address)
     .sadd(this.namespace + this.address +':sparks', spark.id)
-  .exec();
+    .exec();
 
   return this;
 });
@@ -180,7 +179,7 @@ Metroplex.readable('disconnect', function disconnect(spark) {
   this.redis.multi()
     .hdel(this.namespace +'sparks', spark.id)
     .srem(this.namespace + this.address +':sparks', spark.id)
-  .exec();
+    .exec();
 
   return this;
 });

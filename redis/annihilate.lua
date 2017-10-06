@@ -1,7 +1,7 @@
 --
 -- Gather all the information.
 --
-local namespace = '{leverage::namespace}'
+local namespace = '{namespace}'
 local address = assert(KEYS[1], 'The server address is missing')
 
 --
