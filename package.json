@@ -28,10 +28,10 @@
   "devDependencies": {
     "assume": "^2.2.0",
     "istanbul": "^0.4.5",
-    "mocha": "^7.2.0",
+    "mocha": "^8.2.1",
     "omega-supreme": "^3.0.0",
     "pre-commit": "^1.2.0",
-    "primus": "^7.3.0",
+    "primus": "^8.0.1",
     "ws": "^7.3.0"
   },
   "dependencies": {
