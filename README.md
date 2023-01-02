@@ -1,6 +1,6 @@
 # Metroplex
 
-[![Version npm](https://img.shields.io/npm/v/metroplex.svg?style=flat-square)](https://www.npmjs.com/package/metroplex)[![Build Status](https://img.shields.io/github/workflow/status/primus/metroplex/CI/master?label=CI&style=flat-square)](https://github.com/primus/metroplex/actions?query=workflow%3ACI+branch%3Amaster)
+[![Version npm](https://img.shields.io/npm/v/metroplex.svg?style=flat-square)](https://www.npmjs.com/package/metroplex)[![CI](https://img.shields.io/github/actions/workflow/status/primus/metroplex/ci.yml?branch=master&label=CI&style=flat-square)](https://github.com/primus/metroplex/actions?query=workflow%3ACI+branch%3Amaster)
 
 Metroplex a Redis based spark/connection registry for Primus.
 
